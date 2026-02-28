@@ -12,7 +12,7 @@
 	<artifactId>venda</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>venda</name>
-	<description>Serviço para gerenciamento de compras de veículos</description>
+	<description>Serviço para gerenciamento de venda de veículos</description>
 	<url/>
 	<licenses>
 		<license/>

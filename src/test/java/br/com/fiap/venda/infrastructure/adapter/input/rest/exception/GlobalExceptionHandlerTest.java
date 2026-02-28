@@ -30,11 +30,11 @@ class GlobalExceptionHandlerTest {
     void handleValidation_deveRetornar400ComFieldErrors() {
         // arrange
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         Object target = new Object();
-        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(target, "cadastrarCompraRequest");
-        bindingResult.addError(new FieldError("cadastrarCompraRequest", "clienteId", "não pode ser nulo"));
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(target, "cadastrarVendaRequest");
+        bindingResult.addError(new FieldError("cadastrarVendaRequest", "clienteId", "não pode ser nulo"));
 
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
 
@@ -48,7 +48,7 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body);
         assertEquals(400, body.status());
         assertEquals("Erro de validação da requisição", body.message());
-        assertEquals("/compras", body.path());
+        assertEquals("/vendas", body.path());
         assertEquals(1, body.fieldErrors().size());
         assertEquals("clienteId", body.fieldErrors().getFirst().field());
         assertEquals("não pode ser nulo", body.fieldErrors().getFirst().message());
@@ -57,7 +57,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleDomainValidation_deveRetornar400() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         DomainValidationException ex = new DomainValidationException("clienteId", "clienteId é obrigatório");
 
@@ -77,7 +77,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleInvalidJson_deveRetornar400() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         HttpInputMessage inputMessage = new HttpInputMessage() {
             @Override public InputStream getBody() { return InputStream.nullInputStream(); }
@@ -93,13 +93,13 @@ class GlobalExceptionHandlerTest {
         assertNotNull(body);
         assertEquals(400, body.status());
         assertEquals("JSON inválido ou malformado", body.message());
-        assertEquals("/compras", body.path());
+        assertEquals("/vendas", body.path());
     }
 
     @Test
     void handleVeiculoNaoEncontrado_deveRetornar404() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         UUID veiculoId = UUID.randomUUID();
         VeiculoNaoEncontradoException ex = new VeiculoNaoEncontradoException(veiculoId);
@@ -115,7 +115,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleVeiculoIndisponivel_deveRetornar409() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         UUID veiculoId = UUID.randomUUID();
         VeiculoIndisponivelException ex = new VeiculoIndisponivelException(veiculoId, StatusVeiculo.RESERVADO);
@@ -131,7 +131,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void handleAtualizacaoStatusVeiculo_deveRetornar503() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getRequestURI()).thenReturn("/compras");
+        when(request.getRequestURI()).thenReturn("/vendas");
 
         UUID veiculoId = UUID.randomUUID();
         AtualizacaoStatusVeiculoException ex = new AtualizacaoStatusVeiculoException(veiculoId, "timeout");

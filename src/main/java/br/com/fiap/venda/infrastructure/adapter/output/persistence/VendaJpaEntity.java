@@ -10,10 +10,12 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "compras")
+@Table(name = "vendas")
 @IdClass(VendaIdJpaEntity.class)
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -28,17 +30,32 @@ public class VendaJpaEntity {
     @Column(name = "veiculo_id", nullable = false)
     private UUID veiculoId;
 
+    @Column(name = "preco", nullable = false)
+    private BigDecimal preco;
+
+    @Column(name = "data_venda", nullable = false)
+    private LocalDateTime dataVenda;
+
+    @Column(name = "status_pagamento", nullable = true)
+    private String statusPagamento;
+
     public static VendaJpaEntity fromDomain(Venda venda) {
         VendaJpaEntity entity = new VendaJpaEntity();
         entity.clienteId = venda.getClienteId();
         entity.veiculoId = venda.getVeiculoId();
+        entity.preco = venda.getPreco();
+        entity.dataVenda = venda.getDataVenda();
+        entity.statusPagamento = venda.getStatusPagamento();
         return entity;
     }
 
     public Venda toDomain() {
         return new Venda(
                 this.clienteId,
-                this.veiculoId
+                this.veiculoId,
+                this.preco,
+                this.dataVenda,
+                this.statusPagamento
         );
     }
 }

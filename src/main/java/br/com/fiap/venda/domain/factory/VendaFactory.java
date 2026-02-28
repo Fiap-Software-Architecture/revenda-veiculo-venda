@@ -3,16 +3,33 @@ package br.com.fiap.venda.domain.factory;
 import br.com.fiap.venda.domain.exception.DomainValidationException;
 import br.com.fiap.venda.domain.model.Venda;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class VendaFactory {
 
-    public static Venda novoCadastro(UUID clienteId, UUID veiculoId) {
+    public static Venda novoCadastro(UUID clienteId, UUID veiculoId, BigDecimal preco, LocalDateTime dataVenda, String statusPagamento) {
         validarDadosPadroes(clienteId, veiculoId);
 
         return new Venda(
                 clienteId,
-                veiculoId
+                veiculoId,
+                preco,
+                dataVenda,
+                statusPagamento
+        );
+    }
+
+    public static Venda atualizaStatusPagamento(UUID clienteId, UUID veiculoId, BigDecimal preco, LocalDateTime dataVenda, String statusPagamento) {
+        validarDadosPadroes(clienteId, veiculoId);
+
+        return new Venda(
+                clienteId,
+                veiculoId,
+                preco,
+                dataVenda,
+                statusPagamento
         );
     }
 

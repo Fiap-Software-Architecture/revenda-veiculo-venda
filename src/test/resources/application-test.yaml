@@ -3,9 +3,9 @@ server:
 
 spring:
   application:
-    name: compra-service
+    name: venda-service
   datasource:
-    url: jdbc:h2:mem:compradb;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:vendadb;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:

@@ -1,6 +1,8 @@
 package br.com.fiap.venda.infrastructure.adapter.output.persistence;
 
+import br.com.fiap.venda.application.dto.CadastrarVendaCommand;
 import br.com.fiap.venda.domain.model.Venda;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -8,6 +10,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,11 +27,27 @@ class VendaPersistenceAdapterTest {
     @InjectMocks
     private VendaPersistenceAdapter adapter;
 
+    private UUID clienteId;
+    private UUID veiculoId;
+    private BigDecimal preco;
+    private LocalDateTime dataVenda;
+    private String statusPagamento;
+    private CadastrarVendaCommand command;
+
+    @BeforeEach
+    void setUp() {
+        clienteId = UUID.randomUUID();
+        veiculoId = UUID.randomUUID();
+        preco = new BigDecimal(1);
+        dataVenda = LocalDateTime.now();
+        statusPagamento = "PAGO";
+        command = new CadastrarVendaCommand(clienteId, veiculoId, preco, dataVenda, statusPagamento);
+    }
+
     @Test
     void salvar_deveConverterDominioParaEntityESalvar() {
-        UUID clienteId = UUID.randomUUID();
-        UUID veiculoId = UUID.randomUUID();
-        Venda venda = new Venda(clienteId, veiculoId);
+
+        Venda venda = new Venda(clienteId, veiculoId, preco, dataVenda, statusPagamento);
 
         ArgumentCaptor<VendaJpaEntity> captor = ArgumentCaptor.forClass(VendaJpaEntity.class);
 
@@ -40,6 +60,9 @@ class VendaPersistenceAdapterTest {
         VendaJpaEntity entitySalva = captor.getValue();
         assertEquals(clienteId, getField(entitySalva, "clienteId"));
         assertEquals(veiculoId, getField(entitySalva, "veiculoId"));
+        assertEquals(preco, getField(entitySalva, "preco"));
+        assertEquals(dataVenda, getField(entitySalva, "dataVenda"));
+        assertEquals(statusPagamento, getField(entitySalva, "statusPagamento"));
 
         assertNotNull(retorno);
         assertEquals(clienteId, retorno.getClienteId());

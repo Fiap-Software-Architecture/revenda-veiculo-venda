@@ -22,7 +22,7 @@ class BeanConfigurationTest {
             .withPropertyValues("integration.veiculo.base-url=http://localhost:8081");
 
     @Test
-    void deveCriarBeanCadastrarCompraUseCase() {
+    void deveCriarBeanCadastrarVendaUseCase() {
         contextRunner.run(context -> {
             assertThat(context).hasSingleBean(CadastrarVendaUseCase.class);
             assertThat(context.getBean(CadastrarVendaUseCase.class)).isNotNull();
