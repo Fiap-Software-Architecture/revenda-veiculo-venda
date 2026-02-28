@@ -57,7 +57,7 @@ A ideia central é manter o **domínio isolado**, com dependências apontando **
 > Observação: o compose assume que você já tem as imagens locais (ex.: `client-service:0.0.1-SNAPSHOT`).  
 > Para gerar a imagem via Maven (sem CI), rode:
 > ```bash
-> mvn -DskipTests package
+> mvn clean install
 > docker build -t venda-service:0.0.1-SNAPSHOT .
 > ```
 
@@ -116,11 +116,6 @@ Fluxo do pipeline:
 3. **Build da imagem Docker**  
    Gera a imagem do serviço:
    - `docker build -t venda-service:latest -t venda-service:${{ github.sha }} .`
-
-> Observação: este pipeline **constrói** a imagem, mas **não publica** em registry e **não faz deploy** em runtime (EKS/EC2/etc).  
-> Para deploy real, normalmente você adiciona:
-> - Login e push para um registry (ex.: Amazon ECR / GHCR)
-> - Etapa de deploy (Helm/Kustomize/kubectl, ou outro mecanismo)
 
 ---
 
