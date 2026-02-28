@@ -1,6 +1,6 @@
 # venda-service
 
-Serviço do ecossistema **Revenda de Veículos** responsável por **registro de compras**.
+Serviço do ecossistema **Revenda de Veículos** responsável por **registro de vendas**.
 
 Este projeto foi desenvolvido em **Java 21 + Spring Boot** e segue o padrão de **Arquitetura Hexagonal (Ports & Adapters)**.
 
@@ -8,7 +8,7 @@ Este projeto foi desenvolvido em **Java 21 + Spring Boot** e segue o padrão de 
 
 ## 📦 O que é o projeto
 
-O serviço **venda-service** expõe uma API REST para registrar compras de clientes e orquestrar validações e atualizações relacionadas ao veículo..  
+O serviço **venda-service** expõe uma API REST para registrar vendas de clientes e orquestrar validações e atualizações relacionadas ao veículo..  
 Ele persiste dados em **PostgreSQL** e (opcionalmente) protege endpoints usando **Keycloak** como servidor OAuth2/OIDC.
 
 Recursos auxiliares para executar e testar estão em **`docs/`**:

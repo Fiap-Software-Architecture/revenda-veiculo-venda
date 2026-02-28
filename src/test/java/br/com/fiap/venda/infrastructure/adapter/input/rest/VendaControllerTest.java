@@ -2,6 +2,7 @@ package br.com.fiap.venda.infrastructure.adapter.input.rest;
 
 import br.com.fiap.venda.application.dto.CadastrarVendaCommand;
 import br.com.fiap.venda.application.dto.StatusVeiculo;
+import br.com.fiap.venda.application.port.input.AtualizarVendaUseCase;
 import br.com.fiap.venda.application.port.input.CadastrarVendaUseCase;
 import br.com.fiap.venda.domain.exception.VeiculoIndisponivelException;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -34,17 +36,24 @@ class VendaControllerTest {
     @MockitoBean
     private CadastrarVendaUseCase cadastrarVendaUseCase;
 
+    @MockitoBean
+    private AtualizarVendaUseCase atualizarVendaUseCase;
+
     @Test
     void cadastrar_deveRetornar201() throws Exception {
         UUID clienteId = UUID.randomUUID();
         UUID veiculoId = UUID.randomUUID();
+        long preco = 1L;
+        LocalDateTime dataVenda = LocalDateTime.now();
 
         String body = String.format("""
                 {
                   "clienteId": "%s",
-                  "veiculoId": "%s"
+                  "veiculoId": "%s",
+                  "preco": "%d",
+                  "dataVenda": "%s"
                 }
-                """, clienteId, veiculoId);
+                """, clienteId, veiculoId, preco, dataVenda);
 
         mockMvc.perform(post("/vendas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -72,6 +81,8 @@ class VendaControllerTest {
     void cadastrar_quandoVeiculoIndisponivel_deveRetornar409() throws Exception {
         UUID clienteId = UUID.randomUUID();
         UUID veiculoId = UUID.randomUUID();
+        long preco = 1L;
+        LocalDateTime dataVenda = LocalDateTime.now();
 
         doThrow(new VeiculoIndisponivelException(veiculoId, StatusVeiculo.RESERVADO))
                 .when(cadastrarVendaUseCase).executar(any(CadastrarVendaCommand.class));
@@ -79,9 +90,11 @@ class VendaControllerTest {
         String body = String.format("""
                 {
                   "clienteId": "%s",
-                  "veiculoId": "%s"
+                  "veiculoId": "%s",
+                  "preco": "%d",
+                  "dataVenda": "%s"
                 }
-                """, clienteId, veiculoId);
+                """, clienteId, veiculoId, preco, dataVenda);
 
         mockMvc.perform(post("/vendas")
                         .contentType(MediaType.APPLICATION_JSON)

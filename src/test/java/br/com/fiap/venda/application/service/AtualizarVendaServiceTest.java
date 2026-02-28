@@ -1,10 +1,10 @@
 package br.com.fiap.venda.application.service;
 
-import br.com.fiap.venda.application.dto.CadastrarVendaCommand;
+import br.com.fiap.venda.application.dto.AtualizarVendaCommand;
 import br.com.fiap.venda.application.dto.StatusVeiculo;
 import br.com.fiap.venda.application.dto.VeiculoSnapshot;
-import br.com.fiap.venda.application.port.output.VendaRepositoryPort;
 import br.com.fiap.venda.application.port.output.VeiculoConsultaPort;
+import br.com.fiap.venda.application.port.output.VendaRepositoryPort;
 import br.com.fiap.venda.domain.exception.VeiculoIndisponivelException;
 import br.com.fiap.venda.domain.model.Venda;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,12 +19,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CadastrarVendaServiceTest {
+class AtualizarVendaServiceTest {
 
     @Mock
     private VendaRepositoryPort repository;
@@ -33,14 +38,15 @@ class CadastrarVendaServiceTest {
     private VeiculoConsultaPort veiculoConsultaPort;
 
     @InjectMocks
-    private CadastrarVendaService service;
+    private AtualizarVendaService service;
 
     private UUID clienteId;
     private UUID veiculoId;
     private BigDecimal preco;
     private LocalDateTime dataVenda;
     private String statusPagamento;
-    private CadastrarVendaCommand command;
+    private AtualizarVendaCommand command;
+    private Venda venda;
 
     @BeforeEach
     void setUp() {
@@ -49,14 +55,18 @@ class CadastrarVendaServiceTest {
         preco = new BigDecimal(1);
         dataVenda = LocalDateTime.now();
         statusPagamento = "PAGO";
-        command = new CadastrarVendaCommand(clienteId, veiculoId, preco, dataVenda, statusPagamento);
+        command = new AtualizarVendaCommand(clienteId, veiculoId, preco, statusPagamento);
+        venda = new Venda(clienteId, veiculoId, preco, dataVenda, statusPagamento);
     }
 
     @Test
-    void executar_deveReservarSalvarEAtualizarParaVendido() {
+    void executar_deveValidarEAtualizarStatusPagamento() {
         // arrange
+        when(repository.buscarPorId(any(UUID.class), any(UUID.class)))
+                .thenReturn(venda);
+
         when(veiculoConsultaPort.buscarPorId(veiculoId))
-                .thenReturn(new VeiculoSnapshot(veiculoId, StatusVeiculo.DISPONIVEL));
+                .thenReturn(new VeiculoSnapshot(veiculoId, StatusVeiculo.VENDIDO));
 
         when(repository.salvar(any(Venda.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -68,7 +78,6 @@ class CadastrarVendaServiceTest {
 
         // assert
         verify(veiculoConsultaPort).buscarPorId(veiculoId);
-        verify(veiculoConsultaPort).atualizarStatus(veiculoId, StatusVeiculo.RESERVADO);
 
         verify(repository).salvar(vendaCaptor.capture());
         Venda vendaSalva = vendaCaptor.getValue();
@@ -78,7 +87,7 @@ class CadastrarVendaServiceTest {
         assertEquals(dataVenda, vendaSalva.getDataVenda());
         assertEquals(statusPagamento, vendaSalva.getStatusPagamento());
 
-        verify(veiculoConsultaPort).atualizarStatus(veiculoId, StatusVeiculo.VENDIDO);
+        verify(veiculoConsultaPort).buscarPorId(veiculoId);
         verifyNoMoreInteractions(repository, veiculoConsultaPort);
     }
 

@@ -1,8 +1,10 @@
 package br.com.fiap.venda.infrastructure.config;
 
+import br.com.fiap.venda.application.port.input.AtualizarVendaUseCase;
 import br.com.fiap.venda.application.port.input.CadastrarVendaUseCase;
 import br.com.fiap.venda.application.port.output.VendaRepositoryPort;
 import br.com.fiap.venda.application.port.output.VeiculoConsultaPort;
+import br.com.fiap.venda.application.service.AtualizarVendaService;
 import br.com.fiap.venda.application.service.CadastrarVendaService;
 import br.com.fiap.venda.infrastructure.security.TokenRelay;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +16,19 @@ import org.springframework.web.client.RestClient;
 public class BeanConfiguration {
 
     @Bean
-    CadastrarVendaUseCase cadastrarCompraUseCase(
+    CadastrarVendaUseCase cadastrarVendaUseCase(
             VendaRepositoryPort repository,
             VeiculoConsultaPort veiculoConsultaPort
     ) {
         return new CadastrarVendaService(repository, veiculoConsultaPort);
+    }
+
+    @Bean
+    AtualizarVendaUseCase atualizarVendaUseCase(
+            VendaRepositoryPort repository,
+            VeiculoConsultaPort veiculoConsultaPort
+    ) {
+        return new AtualizarVendaService(repository, veiculoConsultaPort);
     }
 
     @Bean

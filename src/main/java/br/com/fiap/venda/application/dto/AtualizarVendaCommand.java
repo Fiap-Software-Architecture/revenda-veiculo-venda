@@ -1,13 +1,11 @@
 package br.com.fiap.venda.application.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record CadastrarVendaCommand(
+public record AtualizarVendaCommand(
         UUID clienteId,
         UUID veiculoId,
-        BigDecimal preco,
-        LocalDateTime dataVenda,
+        BigDecimal valor,
         String statusPagamento
 ) {}

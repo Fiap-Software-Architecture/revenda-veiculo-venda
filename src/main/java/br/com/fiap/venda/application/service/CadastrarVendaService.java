@@ -28,7 +28,10 @@ public class CadastrarVendaService implements CadastrarVendaUseCase {
     private void realizaAVenda(CadastrarVendaCommand command) {
         Venda venda = VendaFactory.novoCadastro(
                 command.clienteId(),
-                command.veiculoId()
+                command.veiculoId(),
+                command.preco(),
+                command.dataVenda(),
+                command.statusPagamento()
         );
         repository.salvar(venda);
     }
