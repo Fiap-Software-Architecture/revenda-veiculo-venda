@@ -1,127 +1,197 @@
-# venda-service
+# 💰 venda-service
 
-Serviço do ecossistema **Revenda de Veículos** responsável por **registro de vendas**.
+Serviço responsável pelo gerenciamento de **Vendas** no projeto **Revenda Veículos**.
 
-Este projeto foi desenvolvido em **Java 21 + Spring Boot** e segue o padrão de **Arquitetura Hexagonal (Ports & Adapters)**.
-
----
-
-## 📦 O que é o projeto
-
-O serviço **venda-service** expõe uma API REST para registrar vendas de clientes e orquestrar validações e atualizações relacionadas ao veículo..  
-Ele persiste dados em **PostgreSQL** e (opcionalmente) protege endpoints usando **Keycloak** como servidor OAuth2/OIDC.
-
-Recursos auxiliares para executar e testar estão em **`docs/`**:
-- `docs/docker-compose/`: ambiente local (Postgres + Keycloak + serviços)
-- `docs/postgres/`: script SQL do banco
-- `docs/postman/`: collection do Postman
-- `docs/openapi/`: especificação OpenAPI (JSON)
-- `docs/keycloak/`: realm do Keycloak (`realm-revenda.json`)
+Implementado em **Spring Boot** com arquitetura **Hexagonal (Ports & Adapters)** e deploy automatizado na **AWS ECS (Fargate)**.
 
 ---
 
-## 🧱 Arquitetura (Hexagonal)
+# 📌 Visão Geral
 
-Estrutura principal do código:
+O `venda-service` é um microserviço responsável por:
 
-- `domain/`  
-  Regras de negócio, entidades/VOs e exceções de domínio (não depende de frameworks).
-- `application/`  
-  Casos de uso (ports de entrada), ports de saída e orquestração do fluxo.
-- `infrastructure/`  
-  Adaptadores e detalhes técnicos (REST Controllers, JPA, integrações externas, configurações Spring).
+- Registrar venda de veículo
+- Associar cliente e veículo
+- Registrar valor da venda
+- Controlar status de pagamento
+- Consultar vendas por cliente
+- Consultar vendas por veículo
 
-A ideia central é manter o **domínio isolado**, com dependências apontando **para dentro**:
-**infra → application → domain**.
+Durante o fluxo de venda, o serviço pode interagir com:
 
----
+- cliente-service
+- veiculo-service (para atualizar status para VENDIDO)
 
-## ▶️ Como rodar localmente
+Ecossistema completo:
 
-### Opção A) Subir o ambiente completo via Docker Compose (recomendado)
-
-1. Acesse a pasta do compose:
-   ```bash
-   cd docs/docker-compose
-   ```
-
-2. Suba os containers:
-   ```bash
-   docker compose --env-file .env up -d
-   ```
-
-3. A API ficará disponível em:
-   - Serviço: `http://localhost:8082`
-   - Swagger UI: `http://localhost:8082/swagger`
-
-> Observação: o compose assume que você já tem as imagens locais (ex.: `client-service:0.0.1-SNAPSHOT`).  
-> Para gerar a imagem via Maven (sem CI), rode:
-> ```bash
-> mvn clean install
-> docker build -t venda-service:0.0.1-SNAPSHOT .
-> ```
-
-### Opção B) Rodar somente o serviço (sem Docker)
-
-1. Suba um PostgreSQL local (ou use o `docs/postgres/scrip-db.sql`).
-2. Exporte variáveis de ambiente (exemplos):
-   ```bash
-   export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/revenda_veiculos_db"
-   export SPRING_DATASOURCE_USERNAME="postgres"
-   export SPRING_DATASOURCE_PASSWORD="p0stgr3s"
-
-   # (opcional) Keycloak (JWK Set URI)
-   export KEYCLOAK_JWK_SET_URI="http://localhost:8089/realms/revenda/protocol/openid-connect/certs"
-   ```
-
-3. Execute:
-   ```bash
-   mvn spring-boot:run
-   ```
+- cliente-service
+- veiculo-service
+- venda-service
+- PostgreSQL (RDS)
+- Keycloak
+- AWS ECR
+- AWS ECS
+- Terraform (Infraestrutura como código)
 
 ---
 
-## ✅ Como testar
+# 🏗 Arquitetura
 
-### Testes unitários/integrados
-```bash
-mvn test
+Este serviço segue **Arquitetura Hexagonal**.
+
+```
+src/main/java
+ └── br.com.revenda.venda
+     ├── domain
+     ├── application
+     ├── adapters
+     │    ├── in
+     │    └── out
+     └── infrastructure
 ```
 
-### Cobertura (JaCoCo) com gate mínimo de 80%
+---
+
+# ☁️ Infraestrutura AWS
+
+Provisionada via Terraform:
+
+- VPC
+- Subnets públicas e privadas
+- Security Groups
+- RDS PostgreSQL
+- ECR
+- ECS (Fargate)
+- Load Balancer
+- Keycloak
+
+---
+
+# 🐳 Containerização
+
+Build local:
+
 ```bash
-mvn verify
+mvn clean package
+docker build -t venda-service .
 ```
 
-- O relatório JaCoCo é gerado em: `target/site/jacoco/index.html`
-- O build falha se a cobertura mínima (80%) não for atendida.
+---
+
+# 📦 ECR
+
+Padrão do repositório:
+
+```
+<project>-<environment>-venda
+```
+
+Exemplo:
+
+```
+revenda-veiculos-dev-venda
+```
+
+Tags publicadas:
+
+```
+revenda-veiculos-dev-venda:latest
+revenda-veiculos-dev-venda:<commit-sha>
+```
 
 ---
 
-## 🚀 Como funciona o deploy (CI/CD)
+# 🚀 ECS (Elastic Container Service)
 
-O pipeline está definido em **`.github/workflows/ci.yml`** e executa em **push** (branches `main`, `master`, `develop`) e **pull requests**.
+Deploy realizado via GitHub Actions.
 
-Fluxo do pipeline:
+## Componentes
 
-1. **Build (sem testes)**  
-   Compila e empacota o JAR com Maven:
-   - `mvn -DskipTests package`
+- ECS Cluster
+- Task Definition
+- ECS Service
+- Load Balancer
+- Target Group
 
-2. **Testes + Cobertura (>= 80%)**  
-   Executa testes e aplica o “quality gate” de cobertura via JaCoCo:
-   - `mvn verify`  
-   Também publica o relatório como artifact (`jacoco-report`).
+Arquivo de Task Definition:
 
-3. **Build da imagem Docker**  
-   Gera a imagem do serviço:
-   - `docker build -t venda-service:latest -t venda-service:${{ github.sha }} .`
+```
+infra/ecs/task-definition-venda.json
+```
 
 ---
 
-## 🔎 Documentação
+# 🔁 Fluxo CI/CD
 
-- OpenAPI: `docs/openapi/openapi.json`
-- Postman: `docs/postman/revenda_veiculos.postman_collection.json`
-- Script do banco: `docs/postgres/scrip-db.sql`
-- Docker Compose: `docs/docker-compose/docker-compose.yml`
+```
+Push na main
+        ↓
+GitHub Actions
+        ↓
+Build Maven
+        ↓
+Testes + Cobertura
+        ↓
+Build Docker
+        ↓
+Push para ECR
+        ↓
+Nova Task Definition
+        ↓
+Deploy no ECS
+        ↓
+Load Balancer
+        ↓
+Produção
+```
+
+---
+
+# 🔐 Secrets necessários no GitHub
+
+## AWS
+
+- AWS_REGION
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+
+## ECR
+
+- ECR_REPOSITORY_VENDA
+
+## ECS
+
+- ECS_CLUSTER
+- ECS_SERVICE_VENDA
+
+---
+
+# 🌍 Variáveis de Ambiente
+
+- SPRING_DATASOURCE_URL
+- SPRING_DATASOURCE_USERNAME
+- SPRING_DATASOURCE_PASSWORD
+- KEYCLOAK_ISSUER_URI
+
+---
+
+# 🖥 Execução Local
+
+```bash
+docker-compose up -d
+mvn spring-boot:run
+```
+
+---
+
+# 🧠 Tecnologias
+
+- Java 21
+- Spring Boot
+- Spring Security
+- JPA / Hibernate
+- PostgreSQL
+- Docker
+- GitHub Actions
+- AWS (ECR, ECS, RDS, ALB)
+- Terraform
