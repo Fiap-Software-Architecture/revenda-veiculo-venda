@@ -51,7 +51,7 @@ jobs:
           path: target/site/jacoco/
 
   docker:
-    name: Build, Push & Deploy (ECR -> ECS)
+    name: Build & Push Docker Image (ECR)
     runs-on: ubuntu-latest
     needs: coverage
 
@@ -67,48 +67,45 @@ jobs:
           cache: maven
 
       - name: Build do JAR
+        working-directory: ${{ env.APP_DIR }}
         run: mvn -B -ntp -DskipTests package
 
-      - name: Configure AWS credentials
-        run: |
-          echo "Configuração de credenciais AWS..."
-          echo "AWS_REGION=${AWS_REGION}"
-          echo "Etapa concluída com sucesso."
+      - name: Configure AWS credentials (Access Keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login no Amazon ECR
         id: login-ecr
-        run: |
-          echo "Login no Amazon ECR..."
-          echo "registry=${ECR_REGISTRY}" >> $GITHUB_OUTPUT
-          echo "Login executado com sucesso."
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build da imagem Docker
-        run: |
-          echo "Build da imagem Docker..."
-          echo "Build concluído com sucesso."
-
-      - name: Push para ECR
-        run: |
-          echo "Push da imagem para o ECR..."
-          echo "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest"
-          echo "${ECR_REGISTRY}/${ECR_REPOSITORY}:${GITHUB_SHA}"
-          echo "Push executado com sucesso."
+      - name: Build e push para o ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ env.APP_DIR }}
+          file: ./${{ env.APP_DIR }}/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Atualizar imagem na ECS
-        run: |
-          echo "Atualização da imagem no ECS..."
-          echo "task-definition: ${{ env.ECS_TASK_DEFINITION }}"
-          echo "container-name: ${{ env.ECS_CONTAINER_NAME }}"
-          echo "image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}"
-          echo "Imagem atualizada com sucesso."
+        id: render-task
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ env.ECS_TASK_DEFINITION }}
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Deploy no ECS Service
-        run: |
-          echo "Deploy da imagem no ECS..."
-          echo "task-definition: ${{ steps.render-task.outputs.task-definition }}"
-          echo "service: ${{ env.ECS_SERVICE }}"
-          echo "cluster: ${{ env.ECS_CLUSTER }}"
-          echo "Deploy executado com sucesso."
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
